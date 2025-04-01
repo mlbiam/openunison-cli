@@ -15,9 +15,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"syscall"
 	"time"
 
+	flock "github.com/gofrs/flock"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/browser"
 	"go.uber.org/zap"
@@ -149,14 +149,6 @@ func (session *OidcSession) loadUrlsFromIssuer(ctx context.Context) error {
 
 	logger.Debug("Content-Type", zap.String("content_type", resp.Header["Content-Type"][0]))
 
-	// bodyBytes, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// bodyString := string(bodyBytes)
-	// fmt.Println(bodyString)
-
 	var doc OIDCDiscoveryDoc
 
 	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
@@ -238,16 +230,22 @@ func SaveSessionToTempFile(session *OidcSession, customPath ...string) (string, 
 }
 
 func LoadSessionFromFile(filePath string) (*OidcSession, error) {
+	lock := flock.New(filePath + ".lock")
+	locked, err := lock.TryLock()
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire file lock: %w", err)
+	}
+	if !locked {
+		return nil, fmt.Errorf("could not acquire file lock")
+	}
+	defer lock.Unlock()
+
 	f, err := os.OpenFile(filePath, os.O_RDONLY, 0)
 	if err != nil {
 		return nil, err
 	}
-	// Lock the file until the process exits
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_SH|syscall.LOCK_NB); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("could not lock session file: %w", err)
-	}
 	defer f.Close()
+
 	var session OidcSession
 	decoder := json.NewDecoder(f)
 	err = decoder.Decode(&session)

@@ -1,0 +1,54 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: openunison-cli
+spec:
+  version: "_VERSION_"
+  homepage: https://github.com/OpenUnison/openunison-cli
+  shortDescription: "Login to a cluster via OpenUnison"
+  description: |
+    Launches a browser to login to the cluster via OpenUnison.  OpenUnison's 
+    certificate MUST be trusted by the local system.  
+  platforms:
+  - selector:
+      matchExpressions:
+      - key: "os"
+        operator: "In"
+        values:
+        - darwin
+    uri: https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-_VERSION_-macos.zip
+    sha256: _MAC_SHA_
+    files:
+    - from: "openunison-cli"
+      to: "openunison-cli"
+    - from: "LICENSE"
+      to: "LICENSE"
+    bin: openunison-cli
+  - selector:
+      matchExpressions:
+      - key: "os"
+        operator: "In"
+        values:
+        - linux
+    uri: https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-_VERSION_-linux.zip
+    sha256: _LINUX_SHA_
+    files:
+    - from: "openunison-cli"
+      to: "openunison-cli"
+    - from: "LICENSE"
+      to: "LICENSE"
+    bin: openunison-cli
+  - selector:
+      matchExpressions:
+      - key: "os"
+        operator: "In"
+        values:
+        - windows
+    uri: https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-_VERSION_-win.zip
+    sha256: _WIN_SHA_
+    files:
+    - from: "openunison-cli.exe"
+      to: "openunison-cli.exe"
+    - from: "LICENSE"
+      to: "LICENSE"
+    bin: openunison-cli.exe
