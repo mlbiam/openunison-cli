@@ -16,7 +16,7 @@ spec:
         operator: "In"
         values:
         - darwin
-    uri: https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-_VERSION_-macos.zip
+    uri: https://nexus.tremolo.io/repository/_OU_CLI_DIR_/openunison-cli-_VERSION_-macos.zip
     sha256: _MAC_SHA_
     files:
     - from: "openunison-cli"
@@ -30,7 +30,7 @@ spec:
         operator: "In"
         values:
         - linux
-    uri: https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-_VERSION_-linux.zip
+    uri: https://nexus.tremolo.io/repository/_OU_CLI_DIR_/openunison-cli-_VERSION_-linux.zip
     sha256: _LINUX_SHA_
     files:
     - from: "openunison-cli"
@@ -44,7 +44,7 @@ spec:
         operator: "In"
         values:
         - windows
-    uri: https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-_VERSION_-win.zip
+    uri: https://nexus.tremolo.io/repository/_OU_CLI_DIR_/openunison-cli-_VERSION_-win.zip
     sha256: _WIN_SHA_
     files:
     - from: "openunison-cli.exe"
