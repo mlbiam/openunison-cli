@@ -46,7 +46,7 @@ export MACOS_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-macos.zip | awk
 export LINUX_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-linux.zip | awk '{print $1}')
 export WIN_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-win.zip | awk '{print $1}')
 
-cat openunison-cli.yaml | sed "s/_VERSION_/$VERSION/g" | sed "s/_MAC_SHA_/$MACOS_SHA256/g" | sed "s/_LINUX_SHA_/$LINUX_SHA256/g" | sed "s/_WIN_SHA_/$WIN_SHA256/g" | set "s/_OU_CLI_DIR_/$1/g"  > target/openunison-cli.yaml
+cat openunison-cli.yaml | sed "s/_VERSION_/$VERSION/g" | sed "s/_MAC_SHA_/$MACOS_SHA256/g" | sed "s/_LINUX_SHA_/$LINUX_SHA256/g" | sed "s/_WIN_SHA_/$WIN_SHA256/g" | sed "s/_OU_CLI_DIR_/$1/g"  > target/openunison-cli.yaml
 
 aws s3 sync ./target/ s3://tremolosecurity-maven/repository/$1/
 
