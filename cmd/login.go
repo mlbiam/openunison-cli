@@ -47,10 +47,10 @@ to quickly create a Cobra application.`,
 			logger = zap.Must(zap.NewProduction())
 			outokens.SetLogger(false)
 		}
-
+		outokens.ShowLogs = true
 		fmt.Printf("Logging into OpenUnison at host: %s\n", host)
 
-		session, err := outokens.LoginToOpenUnison(host, "", context.TODO())
+		session, err := outokens.LoginToOpenUnison(host, caCertPath, context.TODO())
 
 		if err != nil {
 			fmt.Printf("Error logging in: %v\n", err)
@@ -101,4 +101,5 @@ func init() {
 	// loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	loginCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
+	loginCmd.PersistentFlags().StringVar(&caCertPath, "cacert-path", "", "Full path to the CA certificate in PEM format")
 }

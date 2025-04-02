@@ -34,8 +34,12 @@ type OpenUnisonSession struct {
 	IdToken      string `json:"id_token"`
 	RefreshToken string `json:"refresh_token"`
 
+	PathToConfig string
+
 	OidcSession *OidcSession
 }
+
+var ShowLogs bool
 
 func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Context) (*OpenUnisonSession, error) {
 	// Start the redirect server
@@ -108,7 +112,9 @@ func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Conte
 	}
 
 	// Launch browser
-	fmt.Printf("Opening browser for authentication to %s", authUrl.String())
+	if ShowLogs {
+		fmt.Printf("Opening browser for authentication to %s", authUrl.String())
+	}
 	openBrowser(authUrl.String())
 
 	select {
@@ -157,9 +163,6 @@ func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Conte
 		ouSession := ouToken.Token
 		ouSession.UserName = ouToken.UserName
 
-		fmt.Print("User : " + ouSession.UserName + "\n")
-		fmt.Print("Context : " + ouSession.CtxName + "\n")
-
 		ouSession.OidcSession, err = NewOidcSession("https://"+openUnisonHost+"/auth/idp/k8sIdp", "kubernetes", session.CaCert, ouSession.IdToken, ouSession.RefreshToken)
 
 		return &ouSession, nil
@@ -188,10 +191,22 @@ func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath s
 		}
 	}
 
-	execArgs := []string{"oidc"}
+	parsedURL, err := url.Parse(session.OidcSession.Issuer)
+	if err != nil {
+		return err
+	}
+
+	host := parsedURL.Hostname()
+
+	execArgs := []string{"oidc", "--openunison-host", host}
 	if debug {
 		execArgs = append(execArgs, "--debug")
 	}
+
+	if session.OidcSession.CaCert != "" {
+		execArgs = append(execArgs, "--cacert-path", session.OidcSession.CaCert)
+	}
+
 	execArgs = append(execArgs, sessionFilePath)
 
 	config.AuthInfos[contextName] = &api.AuthInfo{

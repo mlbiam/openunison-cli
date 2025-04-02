@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	oulogintest "github.com/tremolosecurity/kubectl-login/test"
+	oulogintest "github.com/tremolosecurity/openunison-cli/test"
 )
 
 func createTestJWT(expiration time.Time) string {

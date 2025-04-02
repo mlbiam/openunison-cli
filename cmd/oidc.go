@@ -14,9 +14,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var debug bool
-var logger *zap.Logger
-
 // oidcCmd represents the oidc command
 var oidcCmd = &cobra.Command{
 	Use:   "oidc",
@@ -38,8 +35,25 @@ var oidcCmd = &cobra.Command{
 
 		path := args[0]
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			logger.Debug("file does not exist", zap.String("path", path))
-			os.Exit(1)
+
+			if openUnisonHost == "" {
+				logger.Debug("file does not exist", zap.String("path", path))
+				os.Exit(1)
+			} else {
+				outokens.ShowLogs = false
+				session, err := outokens.LoginToOpenUnison(openUnisonHost, caCertPath, context.TODO())
+				if err != nil {
+					fmt.Printf("Error logging in: %v\n", err)
+					os.Exit(1)
+				}
+
+				_, err = outokens.SaveSessionToTempFile(session.OidcSession, path)
+				if err != nil {
+					fmt.Printf("Error saving session: %v\n", err)
+					os.Exit(1)
+				}
+
+			}
 		}
 
 		oidcSession, err := outokens.LoadSessionFromFile(path)
@@ -75,6 +89,8 @@ func init() {
 	rootCmd.AddCommand(oidcCmd)
 
 	oidcCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
+	oidcCmd.PersistentFlags().StringVar(&openUnisonHost, "openunison-host", "", "The OpenUnison host to use")
+	oidcCmd.PersistentFlags().StringVar(&caCertPath, "cacert-path", "", "Full path to the CA certificate in PEM format")
 
 	// Here you will define your flags and configuration settings.
 
