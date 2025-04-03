@@ -173,7 +173,7 @@ func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Conte
 	}
 }
 
-func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath string, sessionFilePath string, debug bool, contextNameOverride string) error {
+func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath string, sessionFilePath string, debug bool, contextNameOverride string, forceBeta bool) error {
 	clusterName := session.CtxName
 	userName := session.UserName
 	contextName := userName + "@" + clusterName
@@ -212,18 +212,36 @@ func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath s
 		execArgs = append(execArgs, "--cacert-path", session.OidcSession.CaCert)
 	}
 
+	if forceBeta {
+		execArgs = append(execArgs, "--auth-beta")
+	}
+
 	execArgs = append(execArgs, sessionFilePath)
 
-	config.AuthInfos[userAndContext] = &api.AuthInfo{
-		Exec: &api.ExecConfig{
-			APIVersion:         "client.authentication.k8s.io/v1",
-			Command:            execCommandPath,
-			Args:               execArgs,
-			Env:                []api.ExecEnvVar{},
-			InstallHint:        "copy shell file",
-			ProvideClusterInfo: false,
-			InteractiveMode:    api.NeverExecInteractiveMode,
-		},
+	if forceBeta {
+		config.AuthInfos[userAndContext] = &api.AuthInfo{
+			Exec: &api.ExecConfig{
+				APIVersion:         "client.authentication.k8s.io/v1beta1",
+				Command:            execCommandPath,
+				Args:               execArgs,
+				Env:                []api.ExecEnvVar{},
+				InstallHint:        "copy shell file",
+				ProvideClusterInfo: false,
+				InteractiveMode:    api.NeverExecInteractiveMode,
+			},
+		}
+	} else {
+		config.AuthInfos[userAndContext] = &api.AuthInfo{
+			Exec: &api.ExecConfig{
+				APIVersion:         "client.authentication.k8s.io/v1",
+				Command:            execCommandPath,
+				Args:               execArgs,
+				Env:                []api.ExecEnvVar{},
+				InstallHint:        "copy shell file",
+				ProvideClusterInfo: false,
+				InteractiveMode:    api.NeverExecInteractiveMode,
+			},
+		}
 	}
 
 	config.Contexts[contextName] = &api.Context{

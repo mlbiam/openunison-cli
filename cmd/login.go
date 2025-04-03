@@ -70,7 +70,7 @@ to quickly create a Cobra application.`,
 			os.Exit(1)
 		}
 
-		err = session.SaveKubectlConfigFromSession(pathToOuCli, pathToTempFile, false, contextName)
+		err = session.SaveKubectlConfigFromSession(pathToOuCli, pathToTempFile, false, contextName, forceBeta)
 		if err != nil {
 			fmt.Printf("Error saving kubectl config: %v\n", err)
 			os.Exit(1)
@@ -101,6 +101,7 @@ func init() {
 	// loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	loginCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
+	loginCmd.PersistentFlags().BoolVar(&forceBeta, "auth-beta", false, "Force the kubectl configuration to use client.authentication.k8s.io/v1beta1 instead of client.authentication.k8s.io/v1")
 	loginCmd.PersistentFlags().StringVar(&caCertPath, "cacert-path", "", "Full path to the CA certificate in PEM format")
 	loginCmd.PersistentFlags().StringVar(&contextName, "context-name", "", "An alternative name for the context in the kubeconfig file instead of user@cluster host name")
 }

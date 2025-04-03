@@ -70,7 +70,7 @@ var oidcCmd = &cobra.Command{
 			logger.Debug("OIDC session saved", zap.String("path", path))
 		}
 
-		execCredential, err := outokens.GenerateExecCredential(oidcSession.IDToken)
+		execCredential, err := outokens.GenerateExecCredential(oidcSession.IDToken, forceBeta)
 		if err != nil {
 			logger.Debug("error generating exec credential", zap.Error(err))
 			os.Exit(1)
@@ -91,6 +91,7 @@ func init() {
 	oidcCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
 	oidcCmd.PersistentFlags().StringVar(&openUnisonHost, "openunison-host", "", "The OpenUnison host to use")
 	oidcCmd.PersistentFlags().StringVar(&caCertPath, "cacert-path", "", "Full path to the CA certificate in PEM format")
+	oidcCmd.PersistentFlags().BoolVar(&forceBeta, "auth-beta", false, "Force the kubectl configuration to use client.authentication.k8s.io/v1beta1 instead of client.authentication.k8s.io/v1")
 
 	// Here you will define your flags and configuration settings.
 
