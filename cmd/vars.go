@@ -6,3 +6,4 @@ var debug bool
 var logger *zap.Logger
 var openUnisonHost string
 var caCertPath string
+var contextName string

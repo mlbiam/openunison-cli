@@ -173,10 +173,15 @@ func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Conte
 	}
 }
 
-func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath string, sessionFilePath string, debug bool) error {
+func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath string, sessionFilePath string, debug bool, contextNameOverride string) error {
 	clusterName := session.CtxName
 	userName := session.UserName
 	contextName := userName + "@" + clusterName
+	userAndContext := contextName
+
+	if contextNameOverride != "" {
+		contextName = contextNameOverride
+	}
 
 	pathOptions := clientcmd.NewDefaultPathOptions()
 	config, err := pathOptions.GetStartingConfig()
@@ -209,7 +214,7 @@ func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath s
 
 	execArgs = append(execArgs, sessionFilePath)
 
-	config.AuthInfos[contextName] = &api.AuthInfo{
+	config.AuthInfos[userAndContext] = &api.AuthInfo{
 		Exec: &api.ExecConfig{
 			APIVersion:         "client.authentication.k8s.io/v1",
 			Command:            execCommandPath,
@@ -223,7 +228,7 @@ func (session *OpenUnisonSession) SaveKubectlConfigFromSession(execCommandPath s
 
 	config.Contexts[contextName] = &api.Context{
 		Cluster:  clusterName,
-		AuthInfo: contextName,
+		AuthInfo: userAndContext,
 	}
 	config.CurrentContext = contextName
 
