@@ -82,8 +82,7 @@ func createTLSConfig(caCert string) (*tls.Config, error) {
 			return nil, fmt.Errorf("failed to append CA certificate")
 		}
 		return &tls.Config{
-			RootCAs:            caCertPool,
-			InsecureSkipVerify: true,
+			RootCAs: caCertPool,
 		}, nil
 	}
 	return &tls.Config{}, nil
