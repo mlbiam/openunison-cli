@@ -55,6 +55,7 @@ func getPEMFromTLSCertificate(cert tls.Certificate) (certPEM, keyPEM []byte, err
 }
 
 func TestIdentityProvider(t *testing.T) {
+	SetLogger(true)
 	idp, err := oulogintest.StartTestOIDCProvider()
 
 	if err != nil {
@@ -183,6 +184,7 @@ func TestSaveAndLoadSession(t *testing.T) {
 }
 
 func TestRefreshSession_Success(t *testing.T) {
+	SetLogger(true)
 	idp, err := oulogintest.StartTestOIDCProvider()
 	if err != nil {
 		t.Fatalf("could not start idp: %v", err)

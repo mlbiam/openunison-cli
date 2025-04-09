@@ -91,6 +91,10 @@ func createTLSConfig(caCert string) (*tls.Config, error) {
 
 func (session *OidcSession) isTokenNeedsRefresh() (bool, error) {
 
+	if session.IDToken == "" {
+		return true, nil
+	}
+
 	token, _, err := jwt.NewParser().ParseUnverified(session.IDToken, jwt.MapClaims{})
 	if err != nil {
 		return false, err
