@@ -57,6 +57,7 @@ func NewOidcSession(issuer string, clientID string, caCert string, idToken strin
 		ClientID:     clientID,
 		IDToken:      idToken,
 		RefreshToken: refreshToken,
+		CaCert:       caCert,
 	}
 
 	session.TLSConfig, err = createTLSConfig(caCert)

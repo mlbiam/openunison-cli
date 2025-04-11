@@ -8,3 +8,4 @@ var openUnisonHost string
 var caCertPath string
 var contextName string
 var forceBeta bool
+var caCertBase64 string

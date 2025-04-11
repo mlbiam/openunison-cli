@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"os"
@@ -50,7 +51,26 @@ to quickly create a Cobra application.`,
 		outokens.ShowLogs = true
 		fmt.Printf("Logging into OpenUnison at host: %s\n", host)
 
-		session, err := outokens.LoginToOpenUnison(host, caCertPath, context.TODO())
+		caCert := ""
+
+		if caCertBase64 != "" {
+			certBytes, err := base64.StdEncoding.DecodeString(caCertBase64)
+			if err != nil {
+				fmt.Printf("Error decoding base64 CA certificate: %v\n", err)
+				os.Exit(1)
+			} else {
+				caCert = string(certBytes)
+			}
+		} else if caCertPath != "" {
+			caCertFile, err := os.ReadFile(caCertPath)
+			if err != nil {
+				fmt.Printf("Error reading CA certificate file: %v\n", err)
+				os.Exit(1)
+			}
+			caCert = string(caCertFile)
+		}
+
+		session, err := outokens.LoginToOpenUnison(host, caCert, context.TODO())
 
 		if err != nil {
 			fmt.Printf("Error logging in: %v\n", err)
@@ -103,5 +123,7 @@ func init() {
 	loginCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
 	loginCmd.PersistentFlags().BoolVar(&forceBeta, "auth-beta", false, "Force the kubectl configuration to use client.authentication.k8s.io/v1beta1 instead of client.authentication.k8s.io/v1")
 	loginCmd.PersistentFlags().StringVar(&caCertPath, "cacert-path", "", "Full path to the CA certificate in PEM format")
+
+	loginCmd.PersistentFlags().StringVar(&caCertBase64, "cacert-base64", "", "Base64 encoded CA certificate in PEM format")
 	loginCmd.PersistentFlags().StringVar(&contextName, "context-name", "", "An alternative name for the context in the kubeconfig file instead of user@cluster host name")
 }

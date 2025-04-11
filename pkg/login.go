@@ -41,7 +41,7 @@ type OpenUnisonSession struct {
 
 var ShowLogs bool
 
-func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Context) (*OpenUnisonSession, error) {
+func LoginToOpenUnison(openUnisonHost string, caCert string, ctx context.Context) (*OpenUnisonSession, error) {
 	// Start the redirect server
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
@@ -51,8 +51,12 @@ func LoginToOpenUnison(openUnisonHost string, pathToCA string, ctx context.Conte
 	issuer := "https://" + openUnisonHost + "/auth/idp/k8s-login-cli"
 
 	oidcState := &oidcState{}
-	session, err := NewOidcSession(issuer, "cli-local", pathToCA, "", "")
 
+	session, err := NewOidcSession(issuer, "cli-local", string(caCert), "", "")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create OIDC session: %w", err)
+	}
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Generate nonce and PKCE
 		oidcState.nonce = randomString(32)
