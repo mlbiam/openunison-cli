@@ -9,3 +9,4 @@ var caCertPath string
 var contextName string
 var forceBeta bool
 var caCertBase64 string
+var credsBase64 string

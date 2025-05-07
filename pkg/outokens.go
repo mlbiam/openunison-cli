@@ -50,6 +50,22 @@ type OIDCDiscoveryDoc struct {
 	AzEndpoint    string `json:"authorization_endpoint"`
 }
 
+func NewOidcSessionFromJson(jsonSession string) (*OidcSession, error) {
+	session := &OidcSession{}
+	err := json.Unmarshal([]byte(jsonSession), session)
+	if err != nil {
+		return nil, fmt.Errorf("Could not unmarshal OIDC session", err)
+
+	}
+
+	session.TLSConfig, err = createTLSConfig(session.CaCert)
+	if err != nil {
+		return nil, fmt.Errorf("Could not generate TLS configuration", err)
+	}
+
+	return session, nil
+}
+
 func NewOidcSession(issuer string, clientID string, caCert string, idToken string, refreshToken string) (*OidcSession, error) {
 	var err error
 	session := &OidcSession{
@@ -87,6 +103,29 @@ func createTLSConfig(caCert string) (*tls.Config, error) {
 		}, nil
 	}
 	return &tls.Config{}, nil
+}
+
+func (session *OidcSession) GetSub() (string, error) {
+	if session.IDToken == "" {
+		return "", errors.New("ID token is empty")
+	}
+
+	token, _, err := jwt.NewParser().ParseUnverified(session.IDToken, jwt.MapClaims{})
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid claims")
+	}
+
+	sub, ok := claims["sub"].(string)
+	if !ok {
+		return "", errors.New("missing sub claim")
+	}
+
+	return sub, nil
 }
 
 func (session *OidcSession) isTokenNeedsRefresh() (bool, error) {

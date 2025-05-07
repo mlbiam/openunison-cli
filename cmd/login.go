@@ -6,11 +6,13 @@ package cmd
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 	outokens "github.com/tremolosecurity/openunison-cli/pkg"
@@ -70,11 +72,38 @@ to quickly create a Cobra application.`,
 			caCert = string(caCertFile)
 		}
 
-		session, err := outokens.LoginToOpenUnison(host, caCert, context.TODO())
+		var session *outokens.OpenUnisonSession
+		var err error
 
-		if err != nil {
-			fmt.Printf("Error logging in: %v\n", err)
-			os.Exit(1)
+		if credsBase64 != "" {
+			credsBytes, err := base64.StdEncoding.DecodeString(credsBase64)
+			if err != nil {
+				fmt.Printf("Error decoding base64 credentials: %v\n", err)
+				os.Exit(1)
+			}
+			credsJson := string(credsBytes)
+
+			var ouToken outokens.OpenUnisonToken
+			if err := json.NewDecoder(strings.NewReader(credsJson)).Decode(&ouToken); err != nil {
+				fmt.Printf("failed to load the authenticated session: %w", err)
+				os.Exit(1)
+			}
+
+			session = &ouToken.Token
+			session.UserName = ouToken.UserName
+			session.OidcSession, err = outokens.NewOidcSession("https://"+host+"/auth/idp/k8sIdp", "kubernetes", caCert, session.IdToken, session.RefreshToken)
+			if err != nil {
+				fmt.Printf("failed to create OIDC session: %w", err)
+				os.Exit(1)
+			}
+
+		} else {
+			session, err = outokens.LoginToOpenUnison(host, caCert, context.TODO())
+
+			if err != nil {
+				fmt.Printf("Error logging in: %v\n", err)
+				os.Exit(1)
+			}
 		}
 
 		pathToTempFile, err := outokens.SaveSessionToTempFile(session.OidcSession, "")
@@ -126,4 +155,5 @@ func init() {
 
 	loginCmd.PersistentFlags().StringVar(&caCertBase64, "cacert-base64", "", "Base64 encoded CA certificate in PEM format")
 	loginCmd.PersistentFlags().StringVar(&contextName, "context-name", "", "An alternative name for the context in the kubeconfig file instead of user@cluster host name")
+	loginCmd.PersistentFlags().StringVar(&credsBase64, "creds-base64", "", "Base64 encoded JSON credentials file")
 }

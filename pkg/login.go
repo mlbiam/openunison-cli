@@ -169,6 +169,10 @@ func LoginToOpenUnison(openUnisonHost string, caCert string, ctx context.Context
 
 		ouSession.OidcSession, err = NewOidcSession("https://"+openUnisonHost+"/auth/idp/k8sIdp", "kubernetes", session.CaCert, ouSession.IdToken, ouSession.RefreshToken)
 
+		if err != nil {
+			return nil, fmt.Errorf("failed to create OIDC session: %w", err)
+		}
+
 		return &ouSession, nil
 	case err := <-errCh:
 		return nil, err
