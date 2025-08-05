@@ -5,10 +5,15 @@ metadata:
 spec:
   version: "_VERSION_"
   homepage: https://github.com/OpenUnison/openunison-cli
-  shortDescription: "Login to a cluster via OpenUnison"
+  shortDescription: "Login to a kubernetes cluster via OpenUnison"
   description: |
-    Launches a browser to login to the cluster via OpenUnison.  OpenUnison's 
-    certificate MUST be trusted by the local system.  
+    kubectl exec plugin that will launch a browser to authenticate you 
+    without having a pre-existing kubectl configuration file.  The first
+    time you execute this plugin, include the host of your OpenUnison 
+    server and the plugin will launch a browser and authenticate you.  As
+    you work with kubectl it will keep your short-lived tokens updated and
+    if they expire, automatically re-launch a browser window to authenticate
+    you.
   platforms:
   - selector:
       matchExpressions:
