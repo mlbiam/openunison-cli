@@ -1,12 +1,12 @@
 #!/bin/bash
 
-export VERSION="v1.0.0"
+export VERSION="v$PROJ_VERSION"
 
 rm -rf target
 mkdir -p target
 
 env GOOS=darwin GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-macos .
-env GOOS=linux GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-linux .
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-linux .
 env GOOS=windows GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-win.exe .
 
 mkdir target/darwin
