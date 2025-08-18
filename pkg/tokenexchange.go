@@ -115,7 +115,7 @@ func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds i
 
 	// Signal handling (SIGUSR1 is included so tests can stop without killing the test process)
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM, syscall.SIGUSR1)
 	defer signal.Stop(sigCh)
 
 	sleepDur := time.Duration(sleepSeconds) * time.Second
