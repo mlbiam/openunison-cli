@@ -5,9 +5,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	outokens "github.com/tremolosecurity/openunison-cli/pkg"
+	"go.uber.org/zap"
 )
 
 // exchangeCmd represents the exchange command
@@ -21,20 +23,30 @@ var exchangeCmd = &cobra.Command{
 	
 	you can either set flags for how long to run for or run only once`,
 	Run: func(cmd *cobra.Command, args []string) {
+		logger = zap.Must(zap.NewProduction())
+		outokens.SetLogger(false)
+
+		if len(args) < 3 {
+			logger.Error("Three arguments are required: the path to the token, the exchange URL, and the path to save the results to")
+			os.Exit(1)
+		}
+
 		pathToToken := args[0]
 		tokenExchangeUrl := args[1]
 		pathToSaveTo := args[2]
 
-		fmt.Printf("PathToToken : %s\n", pathToToken)
-		fmt.Printf("exchange urL : %s\n", tokenExchangeUrl)
-		fmt.Printf("path to save to : %s\n", pathToSaveTo)
+		logger.Info(fmt.Sprintf("Path to token : %s", pathToToken))
+		logger.Info(fmt.Sprintf("Exchange URL : %s", tokenExchangeUrl))
+		logger.Info(fmt.Sprintf("Path to save to : %s", pathToSaveTo))
 
 		if singleRun {
+			logger.Info("Single run to generate a token")
 			err := outokens.ExchangeToken(pathToToken, tokenExchangeUrl, pathToSaveTo, caCertPath)
 			if err != nil {
 				panic(err)
 			}
 		} else {
+			logger.Info(fmt.Sprintf("Keeping token updated.  Checking every %d seconds, refreshing when the token is %d minutes from expiration", secondsBetweenRuns, minutesBeforeRefresh))
 			err := outokens.MaintainToken(pathToToken, tokenExchangeUrl, pathToSaveTo, caCertPath, secondsBetweenRuns, minutesBeforeRefresh)
 			if err != nil {
 				panic(err)

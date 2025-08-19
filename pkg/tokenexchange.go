@@ -128,11 +128,13 @@ func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds i
 		default:
 		}
 
+		logger.Info("Checking if expired")
 		shouldExchange := false
 		expPath := filepath.Join(outDir, "expires")
 		expBytes, err := os.ReadFile(expPath)
 		if err != nil {
 			// No expires file yet → need a token
+			logger.Info("No expiration file, generating a new token")
 			shouldExchange = true
 		} else {
 			// Parse RFC3339 timestamp and check remaining time
@@ -140,11 +142,16 @@ func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds i
 			expAt, err := time.Parse(time.RFC3339, expStr)
 			if err != nil {
 				// Bad timestamp → rotate
+				logger.Info("Not a valid timestamp format, generating a new token")
 				shouldExchange = true
 			} else {
 				until := time.Until(expAt.UTC())
+				logger.Info(fmt.Sprintf("Minutes until expiration: %g", until.Minutes()))
 				if until <= rotateDur {
+					logger.Info("Generating a new token")
 					shouldExchange = true
+				} else {
+					logger.Info("Not generating a new token yet")
 				}
 			}
 		}
@@ -152,10 +159,11 @@ func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds i
 		if shouldExchange {
 			if err := ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath); err != nil {
 				// Don’t exit; log to stderr and try again next loop
-				fmt.Fprintf(os.Stderr, "ExchangeToken error: %v\n", err)
+				logger.Error(fmt.Sprintf("ExchangeToken error: %v\n", err))
 			}
 		}
 
+		logger.Info(fmt.Sprintf("Sleeping for %d seconds", sleepSeconds))
 		// Sleep or exit on signal
 		select {
 		case <-sigCh:
