@@ -91,10 +91,10 @@ func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string) error {
 	}
 
 	// Write files
-	if err := os.WriteFile(filepath.Join(outDir, "token.jwt"), []byte(er.Token.JWT), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(outDir, "token.jwt"), []byte(er.Token.JWT), 0o644); err != nil {
 		return fmt.Errorf("write token.jwt: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(outDir, "expires"), []byte(er.Token.Expires), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(outDir, "expires"), []byte(er.Token.Expires), 0o644); err != nil {
 		return fmt.Errorf("write expires: %w", err)
 	}
 
