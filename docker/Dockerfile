@@ -10,4 +10,6 @@ ADD openunison-cli /openunison-cli
 # CA bundle expected by most TLS libs (incl. Go's net/http)
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+USER 400
+
 ENTRYPOINT ["/openunison-cli"]
