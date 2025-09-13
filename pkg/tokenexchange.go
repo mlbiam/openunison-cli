@@ -28,7 +28,7 @@ type ExchangeResponse struct {
 // ExchangeToken reads a JWT from jwtPath, calls serviceURL with it as a Bearer token,
 // requires HTTP 200, then writes token.jwt and expires into outDir.
 // If caPEMPath is a non-empty path, it is used as an additional trust anchor for TLS.
-func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string) error {
+func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string, tokenGlobalRead bool) error {
 	jwtBytes, err := os.ReadFile(jwtPath)
 	if err != nil {
 		return fmt.Errorf("read jwt file: %w", err)
@@ -91,10 +91,18 @@ func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string) error {
 	}
 
 	// Write files
-	if err := os.WriteFile(filepath.Join(outDir, "token.jwt"), []byte(er.Token.JWT), 0o644); err != nil {
+	var fileMode os.FileMode
+
+	if tokenGlobalRead {
+		fileMode = 0o644
+	} else {
+		fileMode = 0o600
+	}
+
+	if err := os.WriteFile(filepath.Join(outDir, "token.jwt"), []byte(er.Token.JWT), fileMode); err != nil {
 		return fmt.Errorf("write token.jwt: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(outDir, "expires"), []byte(er.Token.Expires), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(outDir, "expires"), []byte(er.Token.Expires), fileMode); err != nil {
 		return fmt.Errorf("write expires: %w", err)
 	}
 
@@ -104,7 +112,7 @@ func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string) error {
 // MaintainToken runs indefinitely until it receives SIGINT, SIGTERM, or SIGUSR1.
 // Every loop it checks <outDir>/expires; if missing or expiring within rotateMinutes,
 // it calls ExchangeToken. Then it sleeps sleepSeconds and repeats.
-func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds int, rotateMinutes int) error {
+func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds int, rotateMinutes int, tokenGlobalRead bool) error {
 	if sleepSeconds <= 0 {
 		sleepSeconds = 10
 	}
@@ -157,7 +165,7 @@ func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds i
 		}
 
 		if shouldExchange {
-			if err := ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath); err != nil {
+			if err := ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath, tokenGlobalRead); err != nil {
 				// Don’t exit; log to stderr and try again next loop
 				logger.Error(fmt.Sprintf("ExchangeToken error: %v\n", err))
 			}

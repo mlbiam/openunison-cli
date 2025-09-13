@@ -41,13 +41,13 @@ var exchangeCmd = &cobra.Command{
 
 		if singleRun {
 			logger.Info("Single run to generate a token")
-			err := outokens.ExchangeToken(pathToToken, tokenExchangeUrl, pathToSaveTo, caCertPath)
+			err := outokens.ExchangeToken(pathToToken, tokenExchangeUrl, pathToSaveTo, caCertPath, tokenGlobalRead)
 			if err != nil {
 				panic(err)
 			}
 		} else {
 			logger.Info(fmt.Sprintf("Keeping token updated.  Checking every %d seconds, refreshing when the token is %d minutes from expiration", secondsBetweenRuns, minutesBeforeRefresh))
-			err := outokens.MaintainToken(pathToToken, tokenExchangeUrl, pathToSaveTo, caCertPath, secondsBetweenRuns, minutesBeforeRefresh)
+			err := outokens.MaintainToken(pathToToken, tokenExchangeUrl, pathToSaveTo, caCertPath, secondsBetweenRuns, minutesBeforeRefresh, tokenGlobalRead)
 			if err != nil {
 				panic(err)
 			}
@@ -72,5 +72,6 @@ func init() {
 	exchangeCmd.Flags().StringVar(&caCertPath, "cacert-path", "", "Optional path to the PEM encoded CA cert for the OpenUnison service")
 	exchangeCmd.Flags().IntVar(&secondsBetweenRuns, "seconds-between-runs", 30, "The number of seconds before checking if a token should be refreshed")
 	exchangeCmd.Flags().IntVar(&minutesBeforeRefresh, "minutes-before-refresh", 5, "The number of minutes before expiring that a token should be refreshed")
+	exchangeCmd.Flags().BoolVar(&tokenGlobalRead, "token-is-world-readable", false, "If set to true, the token will be world readable")
 
 }

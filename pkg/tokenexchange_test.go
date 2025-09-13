@@ -68,7 +68,7 @@ func TestExchangeToken_Success_WithCustomCA(t *testing.T) {
 	}
 
 	// Exchange
-	if err := ExchangeToken(jwtPath, ts.URL, outDir, caPath); err != nil {
+	if err := ExchangeToken(jwtPath, ts.URL, outDir, caPath, false); err != nil {
 		t.Fatalf("ExchangeToken error: %v", err)
 	}
 
@@ -115,7 +115,7 @@ func TestExchangeToken_Non200(t *testing.T) {
 	outDir := filepath.Join(tmpDir, "out")
 	_ = os.MkdirAll(outDir, 0o755)
 
-	err := ExchangeToken(jwtPath, ts.URL, outDir, caPath)
+	err := ExchangeToken(jwtPath, ts.URL, outDir, caPath, false)
 	if err == nil {
 		t.Fatal("expected error on non-200, got nil")
 	}
@@ -155,7 +155,7 @@ func TestMaintainToken_Lifecycle_StopWithUSR1(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		_ = MaintainToken(jwtPath, ts.URL, outDir, caPath, 1, 5)
+		_ = MaintainToken(jwtPath, ts.URL, outDir, caPath, 1, 5, false)
 	}()
 
 	// Wait a bit for first fetch
