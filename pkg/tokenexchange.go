@@ -20,47 +20,24 @@ import (
 type ExchangeResponse struct {
 	DisplayName string `json:"displayName"`
 	Token       struct {
-		Expires string `json:"expires"`
-		JWT     string `json:"jwt"`
+		Expires    string `json:"expires"`
+		JWT        string `json:"jwt"`
+		Thumbprint string `json:"thumbprint"`
 	} `json:"token"`
+}
+
+// ThumbprintResponse models the JSON returned from a thumbprint check
+type ThumbprintResponse struct {
+	Thumbprint string `json:"thumbprint"`
 }
 
 // ExchangeToken reads a JWT from jwtPath, calls serviceURL with it as a Bearer token,
 // requires HTTP 200, then writes token.jwt and expires into outDir.
 // If caPEMPath is a non-empty path, it is used as an additional trust anchor for TLS.
 func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string, tokenGlobalRead bool) error {
-	jwtBytes, err := os.ReadFile(jwtPath)
-	if err != nil {
-		return fmt.Errorf("read jwt file: %w", err)
-	}
-	token := strings.TrimSpace(string(jwtBytes))
-
-	if err := os.MkdirAll(outDir, 0o755); err != nil {
-		return fmt.Errorf("ensure outDir: %w", err)
-	}
-
-	// HTTP client, optionally with custom RootCAs
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{},
-	}
-	if caPEMPath != "" {
-		caPEM, err := os.ReadFile(caPEMPath)
-		if err != nil {
-			return fmt.Errorf("read CA PEM: %w", err)
-		}
-		cp, err := x509.SystemCertPool()
-		if err != nil || cp == nil {
-			cp = x509.NewCertPool()
-		}
-		if ok := cp.AppendCertsFromPEM(caPEM); !ok {
-			return errors.New("failed to append CA PEM")
-		}
-		tr.TLSClientConfig.RootCAs = cp
-	}
-
-	client := &http.Client{
-		Transport: tr,
-		Timeout:   30 * time.Second,
+	token, client, err, shouldReturn := createHttpClient(jwtPath, outDir, caPEMPath)
+	if shouldReturn {
+		return err
 	}
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, serviceURL, nil)
@@ -106,7 +83,97 @@ func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string, tokenGlobalRea
 		return fmt.Errorf("write expires: %w", err)
 	}
 
+	if er.Token.Thumbprint != "" {
+		if err := os.WriteFile(filepath.Join(outDir, "thumbprint"), []byte(er.Token.Thumbprint), fileMode); err != nil {
+			return fmt.Errorf("write thumbprint: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func createHttpClient(jwtPath string, outDir string, caPEMPath string) (string, *http.Client, error, bool) {
+	jwtBytes, err := os.ReadFile(jwtPath)
+	if err != nil {
+		return "", nil, fmt.Errorf("read jwt file: %w", err), true
+	}
+	token := strings.TrimSpace(string(jwtBytes))
+
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return "", nil, fmt.Errorf("ensure outDir: %w", err), true
+	}
+
+	// HTTP client, optionally with custom RootCAs
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{},
+	}
+	if caPEMPath != "" {
+		caPEM, err := os.ReadFile(caPEMPath)
+		if err != nil {
+			return "", nil, fmt.Errorf("read CA PEM: %w", err), true
+		}
+		cp, err := x509.SystemCertPool()
+		if err != nil || cp == nil {
+			cp = x509.NewCertPool()
+		}
+		if ok := cp.AppendCertsFromPEM(caPEM); !ok {
+			return "", nil, errors.New("failed to append CA PEM"), true
+		}
+		tr.TLSClientConfig.RootCAs = cp
+	}
+
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   30 * time.Second,
+	}
+	return token, client, nil, false
+}
+
+// checkThumbprint looks to see if a thumbprint is available, and if so compares the existing thumbprint to the current
+// thumbprint.  Returns true if the token should be rotated.
+func checkThumbprint(jwtPath, serviceURL, outDir, caPEMPath string) (bool, error) {
+	// load the thumbprint from disk
+	thumbprintPath := filepath.Join(outDir, "thumbprint")
+	thumbprintBytes, err := os.ReadFile(thumbprintPath)
+	if err != nil {
+		logger.Warn("No thumbprint, assuming not supported")
+		return false, nil
+	}
+	currentThumbprint := string(thumbprintBytes)
+
+	// load the current thumbprint
+	token, client, err, shouldReturn := createHttpClient(jwtPath, outDir, caPEMPath)
+	if shouldReturn {
+		return false, err
+	}
+
+	thumbprintURL := strings.TrimSuffix(serviceURL, "/token/user") + "/sig-cert"
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, thumbprintURL, nil)
+	if err != nil {
+		return false, fmt.Errorf("new request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("http request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK || resp.StatusCode == http.StatusNotFound {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return false, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var thumbprintResponse ThumbprintResponse
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&thumbprintResponse); err != nil {
+		return false, fmt.Errorf("decode response: %w", err)
+	}
+
+	return thumbprintResponse.Thumbprint != currentThumbprint, nil
+
 }
 
 // MaintainToken runs indefinitely until it receives SIGINT, SIGTERM, or SIGUSR1.
@@ -159,7 +226,19 @@ func MaintainToken(jwtPath, serviceURL, outDir, caPEMPath string, sleepSeconds i
 					logger.Info("Generating a new token")
 					shouldExchange = true
 				} else {
-					logger.Info("Not generating a new token yet")
+					thumbprintChanged, err := checkThumbprint(jwtPath, serviceURL, outDir, caPEMPath)
+					if err != nil {
+						logger.Error(fmt.Sprintf("Could not check thumbprint: %v\n", err))
+						shouldExchange = false
+					}
+
+					if thumbprintChanged {
+						logger.Info("Thumbprint changed, generating a new token")
+						shouldExchange = true
+					} else {
+						logger.Info("Not generating a new token yet")
+					}
+
 				}
 			}
 		}
