@@ -11,14 +11,10 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "kubectl-login",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "openunison-cli",
+	Short: "A utility library for authenticating to OpenUnison",
+	Long: `A command line utility for authenticating to OpenUnison with Kubernetes.  Can be used
+	to generate tokens for Kubernetes or as a sidecar to maintain tokens for remote services.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

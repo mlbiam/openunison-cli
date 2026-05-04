@@ -10,3 +10,7 @@ var contextName string
 var forceBeta bool
 var caCertBase64 string
 var credsBase64 string
+var singleRun bool
+var secondsBetweenRuns int
+var minutesBeforeRefresh int
+var tokenGlobalRead bool
