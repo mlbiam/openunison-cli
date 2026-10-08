@@ -30,6 +30,18 @@ spec:
       to: "LICENSE"
     bin: openunison-cli
   - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    uri: https://nexus.tremolo.io/repository/_OU_CLI_DIR_/openunison-cli-_VERSION_-macos-arm64.zip
+    sha256: _MAC_ARM64_SHA_
+    files:
+    - from: "openunison-cli"
+      to: "openunison-cli"
+    - from: "LICENSE"
+      to: "LICENSE"
+    bin: openunison-cli
+  - selector:
       matchExpressions:
       - key: "os"
         operator: "In"

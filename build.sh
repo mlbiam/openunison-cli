@@ -6,6 +6,7 @@ rm -rf target
 mkdir -p target
 
 env GOOS=darwin GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-macos .
+env GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -o ./target/openunison-cli-$VERSION-macos-arm64 .
 env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-linux .
 env GOOS=windows GOARCH=amd64 go build -o ./target/openunison-cli-$VERSION-win.exe .
 
@@ -18,6 +19,16 @@ zip openunison-cli-$VERSION-macos.zip ./openunison-cli LICENSE
 cd ../../
 mv target/darwin/openunison-cli-$VERSION-macos.zip target/
 rm -rf target/darwin
+
+mkdir target/darwin-arm64
+cp ./target/openunison-cli-$VERSION-macos-arm64 target/darwin-arm64/openunison-cli
+chmod +x target/darwin/openunison-cli
+cp LICENSE target/darwin-arm64/
+cd target/darwin-arm64/
+zip openunison-cli-$VERSION-macos-arm64.zip ./openunison-cli LICENSE
+cd ../../
+mv target/darwin-arm64/openunison-cli-$VERSION-macos-arm64.zip target/
+rm -rf target/darwin-arm64
 
 mkdir target/linux
 cp ./target/openunison-cli-$VERSION-linux target/linux/openunison-cli
@@ -45,10 +56,11 @@ rm -rf target/win
 export MACOS_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-macos.zip | awk '{print $1}')
 export LINUX_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-linux.zip | awk '{print $1}')
 export WIN_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-win.zip | awk '{print $1}')
+export MACOS_ARM64_SHA256=$(sha256sum ./target/openunison-cli-$VERSION-macos-arm64.zip | awk '{print $1}')
 
-cat openunison-cli.yaml | sed "s/_VERSION_/$VERSION/g" | sed "s/_MAC_SHA_/$MACOS_SHA256/g" | sed "s/_LINUX_SHA_/$LINUX_SHA256/g" | sed "s/_WIN_SHA_/$WIN_SHA256/g" | sed "s/_OU_CLI_DIR_/$1/g"  > target/openunison-cli.yaml
+cat openunison-cli.yaml | sed "s/_VERSION_/$VERSION/g" | sed "s/_MAC_SHA_/$MACOS_SHA256/g" | sed "s/_MAC_ARM64_SHA_/$MACOS_ARM64_SHA256/g" |sed "s/_LINUX_SHA_/$LINUX_SHA256/g" | sed "s/_WIN_SHA_/$WIN_SHA256/g" | sed "s/_OU_CLI_DIR_/$1/g"  > target/openunison-cli.yaml
 
-#aws s3 sync ./target/ s3://tremolosecurity-maven/repository/$1/
+aws s3 sync ./target/ s3://tremolosecurity-maven/repository/$1/
 
 
 
