@@ -16,11 +16,9 @@ spec:
     you.
   platforms:
   - selector:
-      matchExpressions:
-      - key: "os"
-        operator: "In"
-        values:
-        - darwin
+      matchLabels:
+        os: darwin
+        arch: amd64
     uri: https://nexus.tremolo.io/repository/_OU_CLI_DIR_/openunison-cli-_VERSION_-macos.zip
     sha256: _MAC_SHA_
     files:

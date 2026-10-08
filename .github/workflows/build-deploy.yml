@@ -89,6 +89,7 @@ jobs:
           image: ghcr.io/${{ env.REPO }}:${{ env.TAG }}
           format: spdx
           output-file: /tmp/spdxg
+          upload-release-assets: false
     
       - name: attach sbom to images
         run: |-
