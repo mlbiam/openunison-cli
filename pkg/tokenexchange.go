@@ -36,6 +36,7 @@ type ThumbprintResponse struct {
 // If caPEMPath is a non-empty path, it is used as an additional trust anchor for TLS.
 func ExchangeToken(jwtPath, serviceURL, outDir, caPEMPath string, tokenGlobalRead bool) error {
 	token, client, err, shouldReturn := createHttpClient(jwtPath, outDir, caPEMPath)
+
 	if shouldReturn {
 		return err
 	}
@@ -126,6 +127,7 @@ func createHttpClient(jwtPath string, outDir string, caPEMPath string) (string, 
 		Transport: tr,
 		Timeout:   30 * time.Second,
 	}
+	defer client.CloseIdleConnections()
 	return token, client, nil, false
 }
 

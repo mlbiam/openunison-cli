@@ -1,10 +1,10 @@
 name: Build oulogin
 on:
   push:
-    # branches:
-    #  - main
-    tags:
-      - 'v*.*.*'
+    branches:
+     - main
+    # tags:
+    #   - 'v*.*.*'
 permissions:
   id-token: write
   contents: read
@@ -35,7 +35,7 @@ jobs:
       - name: Update go deps
         run: go mod tidy
 
-      - run: echo "PROJ_VERSION=1.4.0" >> $GITHUB_ENV
+      - run: echo "PROJ_VERSION=1.5.0" >> $GITHUB_ENV
 
       - uses: aws-actions/configure-aws-credentials@v1
         with:
