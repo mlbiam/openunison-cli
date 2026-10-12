@@ -4,30 +4,30 @@ metadata:
   name: openunison-cli
 spec:
   version: {{ .TagName }}
-  homepage: https://github.com/openunison/openunison-cli
+  homepage: https://github.com/OpenUnison/openunison-cli
   platforms:
   - selector:
       matchLabels:
         os: darwin
         arch: amd64
     {{addURIAndSha "https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-{{ .TagName }}-macos.zip"  .TagName  }}
-    bin: oulogin
+    bin: openunison-cli
   - selector:
       matchLabels:
         os: darwin
         arch: arm64
     {{addURIAndSha "https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-{{ .TagName }}-macos-arm64.zip"  .TagName  }}
-    bin: oulogin
+    bin: openunison-cli
   - selector:
       matchLabels:
         os: linux
     {{addURIAndSha "https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-{{ .TagName }}-linux.zip"  .TagName  }}
-    bin: oulogin
+    bin: openunison-cli
   - selector:
       matchLabels:
         os: windows
     {{addURIAndSha "https://nexus.tremolo.io/repository/openunison-cli/openunison-cli-{{ .TagName }}-win.zip"  .TagName  }}
-    bin: oulogin.exe
+    bin: openunison-cli.exe
   shortDescription: "Login to a kubernetes cluster via OpenUnison"
   description: |
     kubectl exec plugin that will launch a browser to authenticate you 
