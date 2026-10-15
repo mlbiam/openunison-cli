@@ -1,10 +1,10 @@
 name: Build oulogin
 on:
   push:
-    # branches:
-    #  - main
-    tags:
-      - 'v*.*.*'
+    branches:
+     - main
+    # tags:
+    #   - 'v*.*.*'
 permissions:
   id-token: write
   contents: read
@@ -19,7 +19,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.27.1"
+          go-version: "1.27.2"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -35,7 +35,7 @@ jobs:
       - name: Update go deps
         run: go mod tidy
 
-      - run: echo "PROJ_VERSION=1.5.1" >> $GITHUB_ENV
+      - run: echo "PROJ_VERSION=1.5.2" >> $GITHUB_ENV
 
       - uses: aws-actions/configure-aws-credentials@v1
         with:
